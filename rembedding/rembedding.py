@@ -4,6 +4,8 @@
 """
 
 from gensim.models import Word2Vec
+from sklearn.decomposition import PCA
+from matplotlib import pyplot
 import random
 
 class REmbedding(object):
@@ -23,53 +25,93 @@ class REmbedding(object):
         for tupl in self.dataset:
             type1 = self.settings[tupl[0]][0]
             type2 = self.settings[tupl[0]][1] if len(tupl[1]) > 1 else self.settings[tupl[0]][0]
-            self.graph.add_relation(tupl[1][0], type1, tupl[0], tupl[1][1] if len(tupl[1]) > 1 else tupl[1][0], type2)
+            sub = type1 + '_' + tupl[1][0]
+            obj = type2 + '_' + tupl[1][1] if len(tupl[1]) > 1 else type2 + '_' + tupl[1][0]
+            self.graph.add_relation(sub, tupl[0], obj, True if len(tupl[1]) > 1 else False)
             
-    def generate_sentences(self, max_depth=10, n_sentences=1000000, allow_revisit=False):
+    def generate_sentences(self, max_depth=10, n_sentences=1000000):
+        import time
+        start_time = time.time()
         self.sentences = []
-        for i in range(10000000):
+        for i in range(n_sentences):
             node = self.graph.nodes[random.choice(list(self.graph.nodes))]
+            clauses = {}
             sentence = [str(node)]
             i_depth = 1
             while(i_depth < max_depth):
-                if len(node.edges) == 0:
+                if node not in clauses:
+                    clauses[node] = set()
+                edg = node.edges.difference(clauses[node])
+                if len(edg) == 0:
                     break
-                edge = random.choice(list(node.edges))
+                edge = random.choice(list(edg))
+                if edge[1] not in clauses:
+                    clauses[edge[1]] = set()
+                clauses[node].add((edge[0], edge[1]))
+                clauses[edge[1]].add((edge[0][1:] if edge[0][:1] == '_' else '_' + edge[0], node))
                 sentence.append(str(edge[0]))
                 sentence.append(str(edge[1]))
                 node = edge[1]
                 i_depth += 1
             self.sentences.append(sentence)
+        print("--- %s seconds ---" % (time.time() - start_time))
+        
+    def run_embedding(self, **kwargs):
+        self.model = Word2Vec(self.sentences, **kwargs)
+        
+    def plot_2d(self, color={}):
+        X = self.model[self.model.wv.vocab]
+        pca = PCA(n_components=2)
+        result = pca.fit_transform(X)
+        # create a scatter plot of the projection
+        words = list(self.model.wv.vocab)
+        fig = pyplot.figure(figsize=(10,10))
+        fi = {}
+        for i, word in enumerate(words):
+            spl = word.split('_')
+            if len(spl) == 1 or len(spl[0]) == 0:
+                pyplot.scatter(result[i, 0], result[i, 1])
+                pyplot.annotate(word, xy=(result[i, 0], result[i, 1]))
+            else:
+                key = spl[0]
+                if key not in fi:
+                    pyplot.scatter(result[i, 0], result[i, 1], c=color[key], label=key)
+                    fi[key] = 1
+                else:
+                    pyplot.scatter(result[i, 0], result[i, 1], c=color[key])
+        pyplot.legend()
+        pyplot.show()
+        
 
     class Graph(object):
         def __init__(self):
             self.nodes = {}
     
-        def add_relation(self, subject, type1, relation, object_, type2):
+        def add_relation(self, subject, relation, object_, symmetry=True):
             if subject not in self.nodes:
-                self.nodes[type1 + '_' + subject] = self.Node(subject, type1)
+                self.nodes[subject] = self.Node(subject)
             if object_ not in self.nodes:
-                self.nodes[type1 + '_' + object_] = self.Node(object_, type2)
-            self.nodes[type1 + '_' + subject].add_edge(relation, self.nodes[type2 + '_' + object_])
+                self.nodes[object_] = self.Node(object_)
+            self.nodes[subject].add_edge(relation, self.nodes[object_], symmetry)
             
         class Node(object):
-            def __init__(self, name, type_):
+            def __init__(self, name):
                 self.name = name
-                self.type = type_
                 self.edges = set()
             
-            def add_edge(self, relation, node):
+            def add_edge(self, relation, node, symmetry=True):
                 self._add_edge(relation, node)
-                node._add_edge('_'+relation, self)
+                if symmetry:
+                    node._add_edge('_'+relation, self)
             
             def _add_edge(self, relation, node):
                 self.edges.add((relation, node))
         
             def __str__(self):
-                return str(self.type) + '_' + str(self.name)
+                return str(self.name)
                 
             def __hash__(self):
-                return hash(self.type + '_' + self.name)
+                return hash(self.name)
                 
             def __eq__(self, other):
                 return str(self) == str(other)
@@ -147,4 +189,6 @@ for line in lines:
         s.append((relation, entities))
         
 rembedd.load_dataset(s)
-rembedd.generate_sentences()
+rembedd.generate_sentences(n_sentences=10000)
+rembedd.run_embedding()
+rembedd.plot_2d(color={'person': 'r'})
