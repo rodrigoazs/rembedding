@@ -4,6 +4,7 @@
 """
 
 from gensim.models import Word2Vec
+from gensim import matutils
 from sklearn.decomposition import PCA
 from matplotlib import pyplot
 import numpy as np
@@ -74,7 +75,24 @@ class REmbedding(object):
         for t in typ:
             typ[t] = np.mean(typ[t], axis=0)
         return typ
-            
+    
+    def most_similar_predicate(self, vector):
+        self.model.wv.similarity()
+        top = self.model.wv.similar_by_vector(vector, topn=len(self.model.wv.vocab))
+        real = []
+        for t in top:
+            s = t[0].split('_')
+            if len(s) <= 1 or len(s[0]) == 0:
+                real.append(t)
+        return real
+    
+    def most_similar_type(self, vector):
+        types = self.type_centroid()
+        distances = []
+        for t in types:
+            distances.append((t, np.dot(matutils.unitvec(vector), matutils.unitvec(types[t]))))
+        sorted(distances, key=lambda x: x[1], reverse=True)
+        return distances
         
     def plot_2d(self, color={}, plot_centroid=False):
         X = self.model[self.model.wv.vocab]
