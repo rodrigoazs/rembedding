@@ -6,6 +6,7 @@
 from gensim.models import Word2Vec
 from sklearn.decomposition import PCA
 from matplotlib import pyplot
+import numpy as np
 import random
 
 class REmbedding(object):
@@ -59,13 +60,36 @@ class REmbedding(object):
     def run_embedding(self, **kwargs):
         self.model = Word2Vec(self.sentences, **kwargs)
         
-    def plot_2d(self, color={}):
+    def centroid(self):
+        return np.mean(self.model[self.model.wv.vocab], axis=0)
+    
+    def type_centroid(self):
+        typ = {}
+        for word in list(self.model.wv.vocab):
+            s = word.split('_')
+            if len(s) > 1 and len(s[0]) > 0:
+                if s[0] not in typ:
+                    typ[s[0]] = []
+                typ[s[0]].append(self.model[word])
+        for t in typ:
+            typ[t] = np.mean(typ[t], axis=0)
+        return typ
+            
+        
+    def plot_2d(self, color={}, plot_centroid=False):
         X = self.model[self.model.wv.vocab]
         pca = PCA(n_components=2)
         result = pca.fit_transform(X)
-        # create a scatter plot of the projection
         words = list(self.model.wv.vocab)
-        fig = pyplot.figure(figsize=(10,10))
+        pyplot.figure(figsize=(10,10))
+        if plot_centroid:
+            c = pca.transform(np.array([self.centroid()]))
+            pyplot.scatter(c[0, 0], c[0, 1], marker='x')
+            centroids = self.type_centroid()
+            for cen in centroids:
+                c = pca.transform(np.array([centroids[cen]]))
+                pyplot.scatter(c[0, 0], c[0, 1], marker='x')
+                pyplot.annotate(cen, xy=(c[0, 0], c[0, 1]))
         fi = {}
         for i, word in enumerate(words):
             spl = word.split('_')
@@ -80,8 +104,7 @@ class REmbedding(object):
                 else:
                     pyplot.scatter(result[i, 0], result[i, 1], c=color[key])
         pyplot.legend()
-        pyplot.show()
-        
+        pyplot.show()    
 
     class Graph(object):
         def __init__(self):
@@ -191,4 +214,4 @@ for line in lines:
 rembedd.load_dataset(s)
 rembedd.generate_sentences(n_sentences=10000)
 rembedd.run_embedding()
-rembedd.plot_2d(color={'person': 'r'})
+rembedd.plot_2d(color={'person': 'r'}, plot_centroid=True)
