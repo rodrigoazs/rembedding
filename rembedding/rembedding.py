@@ -106,7 +106,7 @@ class REmbedding(object):
             centroids = self.type_centroid()
             for cen in centroids:
                 c = pca.transform(np.array([centroids[cen]]))
-                pyplot.scatter(c[0, 0], c[0, 1], marker='x')
+                pyplot.scatter(c[0, 0], c[0, 1], marker='x', c=color[cen])
                 pyplot.annotate(cen, xy=(c[0, 0], c[0, 1]))
         fi = {}
         for i, word in enumerate(words):
@@ -123,7 +123,20 @@ class REmbedding(object):
                     pyplot.scatter(result[i, 0], result[i, 1], c=color[key])
                 #pyplot.annotate(word, xy=(result[i, 0], result[i, 1]))
         pyplot.legend()
-        pyplot.show()    
+        pyplot.show()
+        
+    def plot_2d_vectors(self, vectors):
+        pca = PCA(n_components=2)
+        pca.fit(self.model[self.model.wv.vocab])
+        X = [value for key, value in vectors.items()]
+        result = pca.transform(X)
+        words = list(vectors)
+        pyplot.figure(figsize=(10,10))
+        for i, word in enumerate(words):
+            pyplot.scatter(result[i, 0], result[i, 1])
+            pyplot.annotate(word, xy=(result[i, 0], result[i, 1]))
+        pyplot.legend()
+        pyplot.show()
 
     class Graph(object):
         def __init__(self):

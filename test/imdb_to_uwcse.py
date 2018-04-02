@@ -69,8 +69,8 @@ with open('uwcselearn.pl') as f:
             
 target.load_dataset(s)
 
-source.generate_sentences()
-target.generate_sentences()
+source.generate_sentences(n_sentences=10000000)
+target.generate_sentences(n_sentences=10000000)
 source.run_embedding()
 target.run_embedding()
 source.plot_2d(color={'person': 'r', 'movie': 'b', 'genre':'g'}, plot_centroid=True)
@@ -81,6 +81,41 @@ target_centroid = target.centroid()
 
 source_type_centroid = source.type_centroid()
 transformation = target_centroid - source_centroid
+
+#######################################################
+## plot das constelações
+#source_words = {}
+#for word in source.model.wv.vocab:
+#    s = word.split('_')
+#    if len(s) == 1 or len(s[0]) == 0:
+#        source_words['s_' + word] = source.model[word]
+#        
+#for word in source_type_centroid:
+#    source_words['s_type_' + word] = source_type_centroid[word]
+#    
+#source.plot_2d_vectors(source_words)
+# 
+#target_words = {}       
+#for word in target.model.wv.vocab:
+#    s = word.split('_')
+#    if len(s) == 1 or len(s[0]) == 0:
+#        target_words['t_' + word] = target.model[word]
+# 
+#target_type_centroid = target.type_centroid()
+#for word in target_type_centroid:
+#    target_words['t_type_' + word] = target_type_centroid[word]
+#    
+#target.plot_2d_vectors(target_words)
+#
+## plot das constelações juntas
+#merge_words = source_words.copy()
+#merge_words.update(target_words)
+#for word in merge_words:
+#    # aplica transformacao
+#    if word[:2] == 's_':
+#        merge_words[word] = merge_words[word] + transformation
+#target.plot_2d_vectors(merge_words)
+#######################################################
 
 target.most_similar_type(source_type_centroid['person']+transformation)
 target.most_similar_type(source_type_centroid['movie']+transformation)
