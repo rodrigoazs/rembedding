@@ -121,6 +121,7 @@ class REmbedding(object):
                     fi[key] = 1
                 else:
                     pyplot.scatter(result[i, 0], result[i, 1], c=color[key])
+                #pyplot.annotate(word, xy=(result[i, 0], result[i, 1]))
         pyplot.legend()
         pyplot.show()    
 
@@ -156,80 +157,3 @@ class REmbedding(object):
                 
             def __eq__(self, other):
                 return str(self) == str(other)
-        
-settings = '''parent(person,person).
-male(person).
-grandmother(person,person).'''
-   
-data = '''parent(bart,stijn).
-parent(bart,pieter).
-parent(luc,soetkin).
-parent(willem,lieve).
-parent(willem,katleen).
-parent(rene,willem).
-parent(rene,lucy).
-parent(leon,rose).
-parent(etienne,luc).
-parent(etienne,an).
-parent(prudent,esther).
-
-parent(katleen,stijn).
-parent(katleen,pieter).
-parent(lieve,soetkin).
-parent(esther,lieve).
-parent(esther,katleen).
-parent(yvonne,willem).
-parent(yvonne,lucy).
-parent(alice,rose).
-parent(rose,luc).
-parent(rose,an).
-parent(laura,esther).
-
-male(bart).
-male(etienne).
-male(leon).
-male(luc).
-male(pieter).
-male(prudent).
-male(rene).
-male(stijn).
-male(willem).
-
-grandmother(esther,soetkin).
-grandmother(esther,stijn).
-grandmother(esther,pieter).
-grandmother(yvonne,lieve).
-grandmother(yvonne,katleen).
-grandmother(alice,luc).
-grandmother(alice,an).
-grandmother(rose,soetkin).
-grandmother(laura,lieve).
-grandmother(laura,katleen).'''
-
-rembedd = REmbedding()
-
-import re
-lines = settings.split('\n')
-s = {}
-for line in lines:
-    m = re.search('^(\w+)\(([\w, ]+)*\).$', line)
-    if m:
-        relation = m.group(1).replace(' ', '')
-        entities = m.group(2).replace(' ', '').split(',')
-        s[relation] = entities
-
-rembedd.load_settings(s)
-
-lines = data.split('\n')
-s = []
-for line in lines:
-    m = re.search('^(\w+)\(([\w, ]+)*\).$', line)
-    if m:
-        relation = m.group(1).replace(' ', '')
-        entities = m.group(2).replace(' ', '').split(',')
-        s.append((relation, entities))
-        
-rembedd.load_dataset(s)
-rembedd.generate_sentences(n_sentences=10000)
-rembedd.run_embedding()
-rembedd.plot_2d(color={'person': 'r'}, plot_centroid=True)
