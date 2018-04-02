@@ -74,4 +74,28 @@ target.generate_sentences()
 source.run_embedding()
 target.run_embedding()
 source.plot_2d(color={'person': 'r', 'movie': 'b', 'genre':'g'}, plot_centroid=True)
-target.plot_2d(color={'person': 'r', 'faculty': 'b', 'course': 'g', 'title': 'p'}, plot_centroid=True)
+target.plot_2d(color={'person': 'r', 'faculty': 'b', 'course': 'g', 'title': 'y'}, plot_centroid=True)
+
+source_centroid = source.centroid()
+target_centroid = target.centroid()
+
+source_type_centroid = source.type_centroid()
+transformation = target_centroid - source_centroid
+
+target.most_similar_type(source_type_centroid['person']+transformation)
+target.most_similar_type(source_type_centroid['movie']+transformation)
+target.most_similar_type(source_type_centroid['genre']+transformation)
+
+target.most_similar_predicate(source.model['workedunder']+transformation)
+target.most_similar_predicate(source.model['movie']+transformation)
+target.most_similar_predicate(source.model['actor']+transformation)
+target.most_similar_predicate(source.model['director']+transformation)
+target.most_similar_predicate(source.model['genre']+transformation)
+target.most_similar_predicate(source.model['female']+transformation)
+
+
+transformation = source_centroid - target_centroid 
+source.most_similar_predicate(target.model['publication'] + transformation)
+source.most_similar_predicate(target.model['taughtby'] + transformation)
+source.most_similar_predicate(target.model['professor'] + transformation)
+source.most_similar_predicate(target.model['student'] + transformation)

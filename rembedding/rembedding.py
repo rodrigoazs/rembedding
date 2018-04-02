@@ -77,7 +77,7 @@ class REmbedding(object):
         return typ
     
     def most_similar_predicate(self, vector):
-        self.model.wv.similarity()
+        #self.model.wv.similarity()
         top = self.model.wv.similar_by_vector(vector, topn=len(self.model.wv.vocab))
         real = []
         for t in top:
@@ -91,7 +91,7 @@ class REmbedding(object):
         distances = []
         for t in types:
             distances.append((t, np.dot(matutils.unitvec(vector), matutils.unitvec(types[t]))))
-        sorted(distances, key=lambda x: x[1], reverse=True)
+        distances = sorted(distances, key=lambda x: x[1], reverse=True)
         return distances
         
     def plot_2d(self, color={}, plot_centroid=False):
